@@ -30,7 +30,6 @@ class Utils(object):
         if val is None:
             return None
         words = val.split(':')
-        print(words)
         return Utils.to_int_or_none(words[0])
 
     @staticmethod
@@ -76,9 +75,13 @@ class PktInfo(object):
 
 
 def parse(args):
+    pkts = []
     for line in args.infile:
         pkt_info = PktInfo(line)
-        print(pkt_info)
+        if pkt_info.time is None:
+            continue
+        pkts.append(pkt_info)
+    print('Parsed: %d pkts' % len(pkts))
 
 def main():
    parser = argparse.ArgumentParser()
