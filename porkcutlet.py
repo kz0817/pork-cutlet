@@ -119,7 +119,7 @@ def parse(args):
 def parse_associated_pkt(pkts):
 
     def make_comb_key(src, dst):
-        return '%s:%s' % (src, dst)
+        return '%16s -> %16s' % (src, dst)
 
     cnt = 0;
     stats = {}
@@ -135,7 +135,9 @@ def parse_associated_pkt(pkts):
             stats[key]['tat_sum'] += tat
 
     for key in stats:
-        print(stats[key])
+        st = stats[key]
+        st['tat_avg'] = st['tat_sum'] / st['cnt']
+        print('%s   avg: %s, cnt: %s' % (key, st['tat_avg'], st['cnt']))
 
 def main():
    parser = argparse.ArgumentParser()

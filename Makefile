@@ -1,7 +1,10 @@
-michi.tun0.parsed:
 
-%.parsed: %.ptxt pktparse.py
-	./pktparse.py $< > $@
+PARSER = ./porkcutlet.py
+
+all: michi.tun0.parsed ren.tun0.parsed
+
+%.parsed: %.ptxt $(PARSER)
+	$(PARSER) $< > $@
 
 %.ptxt: %.dat
 	tcpdump -n -r $< > $@
