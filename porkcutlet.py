@@ -176,8 +176,7 @@ def calc_stat(pkts):
         key = make_comb_key(pkt.src, pkt.dst)
         if key not in stats:
             stats[key] = Status()
-        stat = stats[key]
-        stat.add_pkt(pkt)
+        stats[key].add_pkt(pkt)
 
     return stats
 
