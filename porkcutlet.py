@@ -146,7 +146,7 @@ class Status(object):
         self.__add_pkt_time(pkt)
         self.__add_ack_time(pkt)
 
-    def get_avg_ack_time(self):
+    def get_avg_time_to_ack(self):
         if self.ack_cnt == 0:
             return 0
         return (self.ack_time_sum / self.ack_cnt).total_seconds()
@@ -182,7 +182,7 @@ def calc_stat(pkts):
 
 
 def show_stats(stats):
-    fmt = '{key}  Avg time to ACK(ms): {avg_ack_time:10.3f} ' \
+    fmt = '{key}  Avg time to ACK(ms): {avg_time_to_ack:10.3f} ' \
           '({ack_cnt:6}/{cnt:6})  Avg size: {avg_size:5}  ' \
           'Avg interval(ms): {avg_pkt_intvl:10.3f}'
     for key in stats:
@@ -193,7 +193,7 @@ def show_stats(stats):
             'ack_cnt':  st.ack_cnt,
             'avg_size': int(st.get_avg_size()),
             'avg_pkt_intvl': st.get_avg_pkt_interval() * 1e3,
-            'avg_ack_time':  st.get_avg_ack_time() * 1e3,
+            'avg_time_to_ack':  st.get_avg_time_to_ack() * 1e3,
         }
         print(fmt.format(**kwargs))
 
