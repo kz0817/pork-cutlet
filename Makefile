@@ -8,3 +8,7 @@ all: michi.tun0.parsed ren.tun0.parsed
 
 %.ptxt: %.dat
 	tcpdump -n -r $< > $@
+
+.PHONY: clean
+clean:
+	rm -f *.parsed *.ptxt

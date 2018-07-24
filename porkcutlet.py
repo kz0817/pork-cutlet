@@ -52,6 +52,7 @@ class PktInfo(object):
        self.win = None
        self.len = None
        self.ack_pkt = None
+       self.avail = False
 
        self.__parse(line)
 
@@ -73,6 +74,8 @@ class PktInfo(object):
 
         self.__resister_seq()
         self.__associate_related_pkt()
+
+        self.avail = self.seq and self.ack and self.len
 
     def __resister_seq(self):
         if self.seq is None:
@@ -116,7 +119,48 @@ def parse(args):
     print('Parsed: %d pkts' % len(pkts))
     return pkts
 
-def parse_associated_pkt(pkts):
+
+class Status(object):
+    def __init__(self):
+        self.cnt = 0
+        self.ack_cnt = 0
+        self.ack_sum = datetime.timedelta()
+        self.size_sum = 0.0
+        self.prev_pkt_time = None
+        self.pkt_interval_sum = datetime.timedelta()
+
+    def inc(self):
+        self.cnt += 1
+
+    def add_ack(self, ack):
+        self.ack_cnt += 1
+        self.ack_sum += ack
+
+    def get_ack_avg(self):
+        if self.ack_cnt == 0:
+            return 0
+        return (self.ack_sum / self.ack_cnt).total_seconds()
+
+    def add_pkt(self, pkt):
+        self.inc()
+        self.size_sum += pkt.len
+
+        if self.prev_pkt_time is not None:
+            self.pkt_interval_sum += (pkt.time - self.prev_pkt_time)
+        self.prev_pkt_time = pkt.time
+
+    def get_avg_size(self):
+        if self.cnt == 0:
+            return 0;
+        return self.size_sum / self.cnt
+
+    def get_avg_pkt_interval(self):
+        if self.cnt <= 1:
+            return 0.0
+        return (self.pkt_interval_sum / (self.cnt - 1)).total_seconds()
+
+
+def calc_stat(pkts):
 
     def make_comb_key(src, dst):
         return '%16s -> %16s' % (src, dst)
@@ -124,27 +168,36 @@ def parse_associated_pkt(pkts):
     cnt = 0;
     stats = {}
     for pkt in pkts:
+        if not pkt.avail:
+            continue
+
+        key = make_comb_key(pkt.src, pkt.dst)
+        if key not in stats:
+            stats[key] = Status()
+        stat = stats[key]
+        stat.add_pkt(pkt)
+
         if pkt.ack_pkt is None:
             continue
-        key = make_comb_key(pkt.src, pkt.dst)
-        tat = pkt.ack_pkt.time - pkt.time
-        if key not in stats:
-            stats[key] = {'cnt': 1, 'tat_sum': tat}
-        else:
-            stats[key]['cnt'] += 1
-            stats[key]['tat_sum'] += tat
+        stat.add_ack(pkt.ack_pkt.time - pkt.time)
 
+    return stats
+
+def show_stats(stats):
     for key in stats:
         st = stats[key]
-        st['tat_avg'] = st['tat_sum'] / st['cnt']
-        print('%s   avg: %s, cnt: %s' % (key, st['tat_avg'], st['cnt']))
+        print('%s   Avg time to ACK(ms): %10.3f (%6s/%6s)  Avg size: %5d  Avg interval(ms): %10.3f '% \
+              (key, st.get_ack_avg()*1e3, st.ack_cnt, st.cnt,
+               st.get_avg_size(), st.get_avg_pkt_interval()*1e3))
+
 
 def main():
-   parser = argparse.ArgumentParser()
-   parser.add_argument('infile', type=argparse.FileType('r'));
-   args = parser.parse_args()
-   pkts = parse(args)
-   parse_associated_pkt(pkts)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('infile', type=argparse.FileType('r'));
+    args = parser.parse_args()
+    pkts = parse(args)
+    stats = calc_stat(pkts)
+    show_stats(stats)
 
 if __name__ == '__main__':
     main()
