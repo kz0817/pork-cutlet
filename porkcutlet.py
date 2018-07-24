@@ -124,30 +124,34 @@ class Status(object):
     def __init__(self):
         self.cnt = 0
         self.ack_cnt = 0
-        self.ack_sum = datetime.timedelta()
+        self.ack_time_sum = datetime.timedelta()
         self.size_sum = 0.0
         self.prev_pkt_time = None
         self.pkt_interval_sum = datetime.timedelta()
 
-    def inc(self):
+    def __inc(self):
         self.cnt += 1
 
     def add_ack(self, ack):
         self.ack_cnt += 1
-        self.ack_sum += ack
-
-    def get_ack_avg(self):
-        if self.ack_cnt == 0:
-            return 0
-        return (self.ack_sum / self.ack_cnt).total_seconds()
+        self.ack_time_sum += ack
 
     def add_pkt(self, pkt):
-        self.inc()
+        self.__inc()
         self.size_sum += pkt.len
 
         if self.prev_pkt_time is not None:
             self.pkt_interval_sum += (pkt.time - self.prev_pkt_time)
         self.prev_pkt_time = pkt.time
+
+        if pkt.ack_pkt is not None:
+            self.add_ack(pkt.ack_pkt.time - pkt.time)
+
+    def get_avg_ack_time(self):
+        if self.ack_cnt == 0:
+            return 0
+        return (self.ack_time_sum / self.ack_cnt).total_seconds()
+
 
     def get_avg_size(self):
         if self.cnt == 0:
@@ -177,17 +181,13 @@ def calc_stat(pkts):
         stat = stats[key]
         stat.add_pkt(pkt)
 
-        if pkt.ack_pkt is None:
-            continue
-        stat.add_ack(pkt.ack_pkt.time - pkt.time)
-
     return stats
 
 def show_stats(stats):
     for key in stats:
         st = stats[key]
         print('%s   Avg time to ACK(ms): %10.3f (%6s/%6s)  Avg size: %5d  Avg interval(ms): %10.3f '% \
-              (key, st.get_ack_avg()*1e3, st.ack_cnt, st.cnt,
+              (key, st.get_avg_ack_time()*1e3, st.ack_cnt, st.cnt,
                st.get_avg_size(), st.get_avg_pkt_interval()*1e3))
 
 
