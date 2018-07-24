@@ -129,23 +129,22 @@ class Status(object):
         self.prev_pkt_time = None
         self.pkt_interval_sum = datetime.timedelta()
 
-    def __inc(self):
-        self.cnt += 1
-
-    def add_ack(self, ack):
+    def __add_ack_time(self, pkt):
+        if pkt.ack_pkt is None:
+            return
         self.ack_cnt += 1
-        self.ack_time_sum += ack
+        self.ack_time_sum += (pkt.ack_pkt.time - pkt.time)
 
-    def add_pkt(self, pkt):
-        self.__inc()
-        self.size_sum += pkt.len
-
+    def __add_pkt_time(self, pkt):
         if self.prev_pkt_time is not None:
             self.pkt_interval_sum += (pkt.time - self.prev_pkt_time)
         self.prev_pkt_time = pkt.time
 
-        if pkt.ack_pkt is not None:
-            self.add_ack(pkt.ack_pkt.time - pkt.time)
+    def add_pkt(self, pkt):
+        self.cnt += 1
+        self.size_sum += pkt.len
+        self.__add_pkt_time(pkt)
+        self.__add_ack_time(pkt)
 
     def get_avg_ack_time(self):
         if self.ack_cnt == 0:

@@ -1,4 +1,3 @@
-
 PARSER = ./porkcutlet.py
 
 all: michi.tun0.parsed ren.tun0.parsed
