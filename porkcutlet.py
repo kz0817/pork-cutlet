@@ -165,8 +165,7 @@ class Status(object):
 
 def calc_stat(pkts):
 
-    def make_comb_key(src, dst):
-        return '%16s -> %16s' % (src, dst)
+    make_comb_key = lambda src, dst: '%16s -> %16s' % (src, dst)
 
     cnt = 0;
     stats = {}
@@ -183,11 +182,12 @@ def calc_stat(pkts):
     return stats
 
 def show_stats(stats):
+    fmt = '%s   Avg time to ACK(ms): %10.3f (%6s/%6s)  Avg size: %5d  Avg interval(ms): %10.3f '
     for key in stats:
         st = stats[key]
-        print('%s   Avg time to ACK(ms): %10.3f (%6s/%6s)  Avg size: %5d  Avg interval(ms): %10.3f '% \
-              (key, st.get_avg_ack_time()*1e3, st.ack_cnt, st.cnt,
-               st.get_avg_size(), st.get_avg_pkt_interval()*1e3))
+        args = (key, st.get_avg_ack_time()*1e3, st.ack_cnt, st.cnt,
+               st.get_avg_size(), st.get_avg_pkt_interval()*1e3)
+        print(fmt % args)
 
 
 def main():
