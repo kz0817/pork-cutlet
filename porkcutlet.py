@@ -181,12 +181,18 @@ def calc_stat(pkts):
     return stats
 
 def show_stats(stats):
-    fmt = '%s   Avg time to ACK(ms): %10.3f (%6s/%6s)  Avg size: %5d  Avg interval(ms): %10.3f '
+    fmt = '{key}  Avg time to ACK(ms): {avg_ack_time:10.3f} ({ack_cnt:6}/{cnt:6})  Avg size: {avg_size:5}  Avg interval(ms): {avg_pkt_intvl:10.3f}'
     for key in stats:
         st = stats[key]
-        args = (key, st.get_avg_ack_time()*1e3, st.ack_cnt, st.cnt,
-               st.get_avg_size(), st.get_avg_pkt_interval()*1e3)
-        print(fmt % args)
+        kwargs = {
+            'key': key,
+            'cnt':  st.cnt,
+            'ack_cnt':  st.ack_cnt,
+            'avg_size': int(st.get_avg_size()),
+            'avg_pkt_intvl': st.get_avg_pkt_interval() * 1e3,
+            'avg_ack_time':  st.get_avg_ack_time() * 1e3,
+        }
+        print(fmt.format(**kwargs))
 
 
 def main():
